@@ -1,29 +1,36 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Prisma } from '@prisma/client';
-
 import { prisma } from '@/lib/db';
+import { verifyIdToken } from '@/lib/firebase-admin';
 
-const DEFAULT_SUBJECTS = ['Math', 'English', 'Science', 'History'];
+const DEFAULT_SUBJECTS = ['Math', 'English', 'Science', 'History', 'Physics', 'Chemistry'];
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  let userId: string;
+  try {
+    const decoded = await verifyIdToken(req.headers.authorization);
+    userId = decoded.uid;
+  } catch {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // ─── GET ────────────────────────────────────────────────────────────────────
   if (req.method === 'GET') {
     try {
       let subjects = await prisma.subject.findMany({
-        orderBy: {
-          name: 'asc',
-        },
+        where: { userId },
+        orderBy: { name: 'asc' },
       });
 
+      // Seed defaults for new users
       if (subjects.length === 0) {
         await prisma.subject.createMany({
-          data: DEFAULT_SUBJECTS.map((name) => ({ name })),
+          data: DEFAULT_SUBJECTS.map((name) => ({ name, userId })),
           skipDuplicates: true,
         });
-
         subjects = await prisma.subject.findMany({
-          orderBy: {
-            name: 'asc',
-          },
+          where: { userId },
+          orderBy: { name: 'asc' },
         });
       }
 
@@ -33,6 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
+  // ─── POST ───────────────────────────────────────────────────────────────────
   if (req.method === 'POST') {
     const { name } = req.body as { name?: unknown };
 
@@ -48,9 +56,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
       const subject = await prisma.subject.create({
-        data: { name: normalizedName },
+        data: { name: normalizedName, userId },
       });
-
       return res.status(201).json(subject);
     } catch (cause) {
       if (cause instanceof Prisma.PrismaClientKnownRequestError && cause.code === 'P2002') {

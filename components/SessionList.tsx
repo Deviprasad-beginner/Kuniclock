@@ -19,22 +19,166 @@ function formatSeconds(seconds: number): string {
     .padStart(2, '0')}`;
 }
 
-export default function SessionList({ sessions }: { sessions: SessionItem[] }) {
+const SUBJECT_COLORS = [
+  '#a855f7', '#3b82f6', '#22c55e', '#f59e0b',
+  '#ef4444', '#06b6d4', '#ec4899', '#84cc16',
+];
+
+function getSubjectColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return SUBJECT_COLORS[Math.abs(hash) % SUBJECT_COLORS.length];
+}
+
+type SessionListProps = {
+  sessions: SessionItem[];
+  onDelete?: (id: number) => void;
+};
+
+export default function SessionList({ sessions, onDelete }: SessionListProps) {
   if (sessions.length === 0) {
-    return <p className="text-zinc-400">No sessions yet.</p>;
+    return (
+      <div
+        style={{
+          textAlign: 'center',
+          padding: '60px 24px',
+          color: 'var(--text-muted)',
+          border: '1px dashed var(--border)',
+          borderRadius: 'var(--radius-lg)',
+          backgroundColor: 'var(--bg-surface)',
+        }}
+      >
+        <div style={{ fontSize: '40px', marginBottom: '12px' }}>📚</div>
+        <p style={{ fontSize: '16px', fontWeight: 500, color: 'var(--text-secondary)' }}>No sessions yet</p>
+        <p style={{ fontSize: '13px', marginTop: '4px' }}>Start a study session to see it here.</p>
+      </div>
+    );
   }
 
   return (
-    <ul className="w-full max-w-2xl space-y-3">
-      {sessions.map((session) => (
-        <li key={session.id} className="rounded border border-zinc-800 bg-zinc-900 p-4">
-          <div className="font-semibold">{session.subject.name}</div>
-          <div className="text-sm text-zinc-300">
-            {new Date(session.startTime).toLocaleString()} - {new Date(session.endTime).toLocaleString()}
-          </div>
-          <div className="text-sm text-zinc-100">Duration: {formatSeconds(session.duration)}</div>
-        </li>
-      ))}
+    <ul style={{ width: '100%', listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      {sessions.map((session) => {
+        const color = getSubjectColor(session.subject.name);
+        const start = new Date(session.startTime);
+        const end = new Date(session.endTime);
+
+        return (
+          <li
+            key={session.id}
+            style={{
+              borderRadius: 'var(--radius)',
+              border: '1px solid var(--border-subtle)',
+              backgroundColor: 'var(--bg-surface)',
+              padding: '16px 20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px',
+              transition: 'border-color 0.15s ease, background-color 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLLIElement).style.borderColor = 'var(--border)';
+              (e.currentTarget as HTMLLIElement).style.backgroundColor = 'var(--bg-elevated)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLLIElement).style.borderColor = 'var(--border-subtle)';
+              (e.currentTarget as HTMLLIElement).style.backgroundColor = 'var(--bg-surface)';
+            }}
+          >
+            {/* Color indicator */}
+            <div
+              style={{
+                width: '4px',
+                height: '48px',
+                borderRadius: '2px',
+                backgroundColor: color,
+                flexShrink: 0,
+                boxShadow: `0 0 8px ${color}66`,
+              }}
+            />
+
+            {/* Subject name badge */}
+            <div
+              style={{
+                padding: '4px 10px',
+                borderRadius: '20px',
+                backgroundColor: `${color}22`,
+                border: `1px solid ${color}44`,
+                color: color,
+                fontSize: '12px',
+                fontWeight: 600,
+                flexShrink: 0,
+              }}
+            >
+              {session.subject.name}
+            </div>
+
+            {/* Time info */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  fontSize: '13px',
+                  color: 'var(--text-muted)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {start.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                {' '}·{' '}
+                {start.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                {' → '}
+                {end.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+              </div>
+            </div>
+
+            {/* Duration */}
+            <div
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: '15px',
+                fontWeight: 600,
+                color: 'var(--text-primary)',
+                flexShrink: 0,
+              }}
+            >
+              {formatSeconds(session.duration)}
+            </div>
+
+            {/* Delete button */}
+            {onDelete && (
+              <button
+                onClick={() => onDelete(session.id)}
+                style={{
+                  background: 'none',
+                  border: '1px solid transparent',
+                  borderRadius: 'var(--radius-sm)',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '4px 8px',
+                  fontSize: '14px',
+                  transition: 'all 0.15s ease',
+                  flexShrink: 0,
+                }}
+                title="Delete session"
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.color = 'var(--accent-red)';
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(239,68,68,0.3)';
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(239,68,68,0.1)';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)';
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent';
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent';
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }

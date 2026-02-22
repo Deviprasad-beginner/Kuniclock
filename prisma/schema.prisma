@@ -3,16 +3,20 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
 model Subject {
   id        Int            @id @default(autoincrement())
-  name      String         @unique
+  name      String
+  userId    String
   sessions  StudySession[]
   createdAt DateTime       @default(now())
+
+  @@unique([name, userId])
+  @@index([userId])
 }
 
 model StudySession {
@@ -22,8 +26,9 @@ model StudySession {
   startTime DateTime
   endTime   DateTime
   duration  Int
+  userId    String
   createdAt DateTime @default(now())
 
   @@index([startTime])
-  @@index([subjectId, startTime])
+  @@index([userId, startTime])
 }
