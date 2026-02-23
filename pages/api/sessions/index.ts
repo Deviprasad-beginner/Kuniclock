@@ -48,7 +48,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           userId,
           ...(startOfRange ? { startTime: { gte: startOfRange } } : {}),
         },
-        include: { subject: true },
+        select: {
+          id: true,
+          duration: true,
+          startTime: true,
+          endTime: true,
+          intent: true,
+          targetDuration: true,
+          subject: { select: { name: true } }
+        },
         orderBy,
       });
 
@@ -60,15 +68,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // ─── POST ───────────────────────────────────────────────────────────────────
   if (req.method === 'POST') {
-    const { subjectId, intent, startTime, endTime } = req.body as {
+    const { subjectId, intent, startTime, endTime, targetDuration } = req.body as {
       subjectId?: unknown;
       intent?: unknown;
       startTime?: unknown;
       endTime?: unknown;
+      targetDuration?: unknown;
     };
     const parsedSubjectId = toFiniteNumber(subjectId);
     const parsedStartTime = toFiniteNumber(startTime);
     const parsedEndTime = toFiniteNumber(endTime);
+    const parsedTargetDuration = toFiniteNumber(targetDuration);
 
     // Parse intent as a string or null
     const parsedIntent = typeof intent === 'string' && intent.trim() !== '' ? intent.trim() : null;
@@ -98,6 +108,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         data: {
           subjectId: parsedSubjectId,
           intent: parsedIntent,
+          targetDuration: parsedTargetDuration,
           startTime: new Date(parsedStartTime),
           endTime: new Date(parsedEndTime),
           duration,
@@ -139,9 +150,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               // Check if they missed a day to reset streak
               let newStreak = target.currentStreak + 1;
               if (target.lastHitDate) {
-                const lastDate = new Date(target.lastHitDate);
+                const [year, month, day] = target.lastHitDate.split('-').map(Number);
+                const lastDate = new Date(year, month - 1, day);
+                lastDate.setHours(0, 0, 0, 0);
                 const diffTime = Math.abs(startOfDay.getTime() - lastDate.getTime());
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
                 if (diffDays > 1) {
                   newStreak = 1; // Streak broken, restart at 1
                 }

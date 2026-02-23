@@ -20,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
             if (!target) {
                 target = await prisma.userTarget.create({
-                    data: { userId, dailySeconds: 7200, currentStreak: 0 },
+                    data: { userId, dailySeconds: 21600, currentStreak: 0 },
                 });
             }
 

@@ -3,10 +3,19 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { useTheme } from 'next-themes';
+import { Sun, Moon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function NavBar() {
     const { user, loading, signOut } = useAuth();
+    const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
     const router = useRouter();
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     async function handleSignOut() {
         await signOut();
@@ -141,6 +150,35 @@ export default function NavBar() {
                     >
                         Sign out
                     </button>
+                    {/* Theme Toggle Button */}
+                    {mounted && (
+                        <button
+                            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                            style={{
+                                padding: '6px',
+                                borderRadius: '6px',
+                                border: '1px solid var(--border-subtle)',
+                                backgroundColor: 'var(--bg-surface)',
+                                color: 'var(--text-secondary)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.15s ease',
+                            }}
+                            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                            onMouseEnter={(e) => {
+                                (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)';
+                                (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)';
+                            }}
+                            onMouseLeave={(e) => {
+                                (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)';
+                                (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-subtle)';
+                            }}
+                        >
+                            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                        </button>
+                    )}
                 </div>
             )}
 
@@ -161,6 +199,30 @@ export default function NavBar() {
                 >
                     Sign in
                 </Link>
+            )}
+
+            {/* In case user is NOT signed in, STILL show the theme toggler to the right */}
+            {mounted && !user && !loading && (
+                <div style={{ marginLeft: '12px' }}>
+                    <button
+                        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                        style={{
+                            padding: '6px',
+                            borderRadius: '6px',
+                            border: '1px solid var(--border-subtle)',
+                            backgroundColor: 'var(--bg-surface)',
+                            color: 'var(--text-secondary)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.15s ease',
+                        }}
+                        title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                    >
+                        {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                    </button>
+                </div>
             )}
         </nav>
     );

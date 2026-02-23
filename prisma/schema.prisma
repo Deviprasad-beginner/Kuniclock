@@ -21,22 +21,23 @@ model Subject {
 
 model UserTarget {
   userId        String   @id
-  dailySeconds  Int      @default(7200) // Default 2 hours
+  dailySeconds  Int      @default(21600) // Default 6 hours
   currentStreak Int      @default(0)
   lastHitDate   String?  // Track the last local date string (YYYY-MM-DD) they hit the target
   updatedAt     DateTime @updatedAt
 }
 
 model StudySession {
-  id        Int      @id @default(autoincrement())
-  subjectId Int
-  subject   Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  intent    String?  // Optional tag like "Problem Solving", "Memorising" etc.
-  startTime DateTime
-  endTime   DateTime
-  duration  Int
-  userId    String
-  createdAt DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  subjectId      Int
+  subject        Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  intent         String?  // Optional tag like "Problem Solving", "Memorising" etc.
+  targetDuration Int?     // Intended duration in seconds (e.g., Pomodoro goal)
+  startTime      DateTime
+  endTime        DateTime
+  duration       Int
+  userId         String
+  createdAt      DateTime @default(now())
 
   @@index([startTime])
   @@index([userId, startTime])

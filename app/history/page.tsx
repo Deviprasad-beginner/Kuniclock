@@ -72,16 +72,16 @@ function HistoryContent() {
       minHeight: 'calc(100vh - 60px)',
     }}>
       {/* Header row */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+      <div className="glass-panel" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', padding: '24px', borderRadius: 'var(--radius-lg)' }}>
         <div>
-          <h1 style={{ fontSize: '28px', fontWeight: 700, letterSpacing: '-0.02em' }}>Session History</h1>
-          <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginTop: '4px' }}>All your recorded study sessions</p>
+          <h1 style={{ fontSize: '32px', fontWeight: 800, letterSpacing: '-0.03em', background: 'linear-gradient(180deg, #ffffff 0%, #a1a1aa 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 2px 8px rgba(255,255,255,0.05))' }}>Session History</h1>
+          <p style={{ fontSize: '15px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: 500 }}>All your recorded study sessions</p>
         </div>
         {!loading && sessions.length > 0 && (
-          <div style={{ padding: '8px 16px', borderRadius: '20px', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)', fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', gap: '12px' }}>
-            <span>📚 {sessions.length} sessions</span>
+          <div className="glass-panel-elevated" style={{ padding: '12px 20px', borderRadius: '100px', border: '1px solid var(--border-subtle)', fontSize: '14px', color: 'var(--text-secondary)', display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ fontSize: '16px' }}>📚</span> <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{sessions.length}</span> sessions</span>
             <span style={{ color: 'var(--border)' }}>|</span>
-            <span>⏱ {hours}h {minutes}m total</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ fontSize: '16px' }}>⏱</span> <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{hours}h {minutes}m</span> total</span>
           </div>
         )}
       </div>
@@ -89,20 +89,22 @@ function HistoryContent() {
       {/* Filter + Sort controls */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
         {/* Filter tabs */}
-        <div style={{
-          display: 'flex', borderRadius: 'var(--radius)', border: '1px solid var(--border)',
-          overflow: 'hidden', backgroundColor: 'var(--bg-surface)',
+        <div className="glass-panel" style={{
+          display: 'flex', borderRadius: 'var(--radius)',
+          overflow: 'hidden', padding: '4px', gap: '4px'
         }}>
           {filterTabs.map(({ key, label, icon }) => (
             <button
               key={key}
               onClick={() => setFilter(key)}
               style={{
-                padding: '8px 14px', border: 'none', fontSize: '13px', fontWeight: 500,
-                cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
+                padding: '10px 16px', border: 'none', fontSize: '14px', fontWeight: 600,
+                cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s',
                 backgroundColor: filter === key ? 'var(--bg-elevated)' : 'transparent',
                 color: filter === key ? 'var(--text-primary)' : 'var(--text-muted)',
-                display: 'flex', alignItems: 'center', gap: '5px',
+                borderRadius: 'calc(var(--radius) - 2px)',
+                display: 'flex', alignItems: 'center', gap: '6px',
+                boxShadow: filter === key ? '0 2px 8px rgba(0,0,0,0.2)' : 'none'
               }}
             >
               <span>{icon}</span> {label}
@@ -115,26 +117,29 @@ function HistoryContent() {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortMode)}
+            className="glass-panel"
             style={{
-              padding: '8px 32px 8px 14px', borderRadius: 'var(--radius)',
-              border: '1px solid var(--border)', backgroundColor: 'var(--bg-surface)',
-              color: 'var(--text-secondary)', fontSize: '13px', fontFamily: 'inherit',
+              padding: '12px 36px 12px 16px', borderRadius: 'var(--radius)',
+              color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 500, fontFamily: 'inherit',
               appearance: 'none', WebkitAppearance: 'none', cursor: 'pointer', outline: 'none',
+              transition: 'border-color 0.2s',
             }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'; }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; }}
           >
             {sortOptions.map(({ key, label }) => (
-              <option key={key} value={key}>{label}</option>
+              <option key={key} value={key} style={{ background: '#18181b', color: '#fff' }}>{label}</option>
             ))}
           </select>
-          <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)', fontSize: '11px' }}>▾</span>
+          <span style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-muted)', fontSize: '12px' }}>▾</span>
         </div>
       </div>
 
       {/* Content */}
       {loading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {[1, 2, 3].map((i) => (
-            <div key={i} style={{ height: '72px', borderRadius: 'var(--radius)', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', opacity: 1 - i * 0.15 }} />
+            <div key={i} className="glass-panel" style={{ height: '84px', borderRadius: 'var(--radius-lg)', opacity: 1 - i * 0.15, animation: 'pulse-glow-purple 2s infinite' }} />
           ))}
         </div>
       ) : (

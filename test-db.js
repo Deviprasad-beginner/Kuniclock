@@ -1,17 +1,19 @@
 const { Client } = require('pg');
+require('dotenv').config();
 
 async function testConnection() {
     const client = new Client({
-        connectionString: "postgresql://neondb_owner:npg_B28dkgzjQRnp@ep-hidden-bird-ailfyijr.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require"
+        connectionString: process.env.DIRECT_URL,
     });
+
     try {
         await client.connect();
-        console.log("Connected successfully!");
+        console.log('Connected to Neon successfully using pg module!');
         const res = await client.query('SELECT NOW()');
-        console.log(res.rows[0]);
+        console.log('Time from DB:', res.rows[0]);
         await client.end();
     } catch (err) {
-        console.error("Connection error", err.stack);
+        console.error('Connection error', err.stack);
     }
 }
 

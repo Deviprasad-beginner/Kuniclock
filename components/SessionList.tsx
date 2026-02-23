@@ -6,6 +6,7 @@ export type SessionItem = {
   startTime: string;
   endTime: string;
   intent?: string | null;
+  targetDuration?: number | null;
   subject: {
     name: string;
   };
@@ -50,13 +51,13 @@ export default function SessionList({ sessions, onDelete }: SessionListProps) {
   if (sessions.length === 0) {
     return (
       <div
+        className="glass-panel"
         style={{
           textAlign: 'center',
-          padding: '60px 24px',
+          padding: '80px 24px',
           color: 'var(--text-muted)',
-          border: '1px dashed var(--border)',
           borderRadius: 'var(--radius-lg)',
-          backgroundColor: 'var(--bg-surface)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center'
         }}
       >
         <div style={{ fontSize: '40px', marginBottom: '12px' }}>📚</div>
@@ -77,23 +78,24 @@ export default function SessionList({ sessions, onDelete }: SessionListProps) {
         return (
           <li
             key={session.id}
+            className="glass-panel"
             style={{
-              borderRadius: 'var(--radius)',
-              border: '1px solid var(--border-subtle)',
-              backgroundColor: 'var(--bg-surface)',
-              padding: '16px 20px',
+              padding: '20px 24px',
               display: 'flex',
               alignItems: 'center',
-              gap: '16px',
-              transition: 'border-color 0.15s ease, background-color 0.15s ease',
+              gap: '20px',
+              transition: 'all 0.2s ease',
+              borderRadius: 'var(--radius-lg)'
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLLIElement).style.borderColor = 'var(--border)';
-              (e.currentTarget as HTMLLIElement).style.backgroundColor = 'var(--bg-elevated)';
+              (e.currentTarget as HTMLLIElement).style.transform = 'translateY(-2px)';
+              (e.currentTarget as HTMLLIElement).style.boxShadow = '0 12px 40px 0 rgba(0, 0, 0, 0.6)';
+              (e.currentTarget as HTMLLIElement).style.borderColor = 'rgba(255,255,255,0.2)';
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLLIElement).style.borderColor = 'var(--border-subtle)';
-              (e.currentTarget as HTMLLIElement).style.backgroundColor = 'var(--bg-surface)';
+              (e.currentTarget as HTMLLIElement).style.transform = 'translateY(0)';
+              (e.currentTarget as HTMLLIElement).style.boxShadow = '0 8px 32px 0 rgba(0, 0, 0, 0.5)';
+              (e.currentTarget as HTMLLIElement).style.borderColor = 'var(--border)';
             }}
           >
             {/* Color indicator */}
@@ -144,35 +146,59 @@ export default function SessionList({ sessions, onDelete }: SessionListProps) {
             </div>
 
             {/* Time info */}
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
               <div
                 style={{
-                  fontSize: '13px',
-                  color: 'var(--text-muted)',
+                  fontSize: '14px',
+                  color: 'var(--text-primary)',
+                  fontWeight: 500,
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                 }}
               >
-                {start.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
-                {' '}·{' '}
-                {start.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                {' → '}
-                {end.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                {start.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+              </div>
+              <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                {start.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+                {' — '}
+                {end.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
               </div>
             </div>
 
-            {/* Duration */}
+            {/* Duration and Goals */}
             <div
               style={{
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: '15px',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
                 flexShrink: 0,
               }}
             >
-              {formatSeconds(session.duration)}
+              {session.targetDuration != null && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '40px', height: '6px', backgroundColor: 'var(--bg-elevated)', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{
+                      width: `${Math.min(100, Math.round((session.duration / session.targetDuration) * 100))}%`,
+                      height: '100%',
+                      backgroundColor: color
+                    }} />
+                  </div>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                    {Math.round((session.duration / session.targetDuration) * 100)}%
+                  </span>
+                </div>
+              )}
+              <div
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                }}
+              >
+                {formatSeconds(session.duration)}
+              </div>
             </div>
 
             {/* Delete button */}
@@ -193,13 +219,13 @@ export default function SessionList({ sessions, onDelete }: SessionListProps) {
                 title="Delete session"
                 onMouseEnter={(e) => {
                   (e.currentTarget as HTMLButtonElement).style.color = 'var(--accent-red)';
-                  (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(239,68,68,0.3)';
-                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(239,68,68,0.1)';
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(239,68,68,0.15)';
+                  (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.1)';
                 }}
                 onMouseLeave={(e) => {
                   (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)';
-                  (e.currentTarget as HTMLButtonElement).style.borderColor = 'transparent';
                   (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent';
+                  (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1)';
                 }}
               >
                 ✕

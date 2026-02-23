@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import NavBar from '@/components/NavBar';
 import { AuthProvider } from '@/lib/auth-context';
+import { ThemeProvider } from '@/components/ThemeProvider';
 import './globals.css';
 
 export const metadata = {
@@ -10,7 +11,7 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         style={{
           minHeight: '100vh',
@@ -29,22 +30,24 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             zIndex: 0,
           }}
         />
-        <AuthProvider>
-          <header
-            style={{
-              position: 'sticky',
-              top: 0,
-              zIndex: 50,
-              borderBottom: '1px solid var(--border-subtle)',
-              backgroundColor: 'rgba(9,9,11,0.85)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-            }}
-          >
-            <NavBar />
-          </header>
-          <div style={{ position: 'relative', zIndex: 1 }}>{children}</div>
-        </AuthProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <AuthProvider>
+            <header
+              style={{
+                position: 'sticky',
+                top: 0,
+                zIndex: 50,
+                borderBottom: '1px solid var(--border-subtle)',
+                backgroundColor: 'var(--bg-glass-nav)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+              }}
+            >
+              <NavBar />
+            </header>
+            <div style={{ position: 'relative', zIndex: 1 }}>{children}</div>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
