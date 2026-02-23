@@ -60,14 +60,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // ─── POST ───────────────────────────────────────────────────────────────────
   if (req.method === 'POST') {
-    const { subjectId, startTime, endTime } = req.body as {
+    const { subjectId, intent, startTime, endTime } = req.body as {
       subjectId?: unknown;
+      intent?: unknown;
       startTime?: unknown;
       endTime?: unknown;
     };
     const parsedSubjectId = toFiniteNumber(subjectId);
     const parsedStartTime = toFiniteNumber(startTime);
     const parsedEndTime = toFiniteNumber(endTime);
+
+    // Parse intent as a string or null
+    const parsedIntent = typeof intent === 'string' && intent.trim() !== '' ? intent.trim() : null;
 
     if (!parsedSubjectId || !Number.isInteger(parsedSubjectId) || parsedSubjectId <= 0) {
       return res.status(400).json({ error: 'subjectId must be a positive integer' });
@@ -93,6 +97,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const session = await prisma.studySession.create({
         data: {
           subjectId: parsedSubjectId,
+          intent: parsedIntent,
           startTime: new Date(parsedStartTime),
           endTime: new Date(parsedEndTime),
           duration,
@@ -100,6 +105,59 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
         include: { subject: true },
       });
+
+      // --- Streak Calculation ---
+      try {
+        const target = await prisma.userTarget.findUnique({ where: { userId } });
+        if (target) {
+          // Get start and end of the local day for the session's end time
+          const sessionDate = new Date(parsedEndTime);
+          const startOfDay = new Date(sessionDate);
+          startOfDay.setHours(0, 0, 0, 0);
+          const endOfDay = new Date(sessionDate);
+          endOfDay.setHours(23, 59, 59, 999);
+
+          // Format date as YYYY-MM-DD in local time
+          const pad = (n: number) => n.toString().padStart(2, '0');
+          const dateString = `${sessionDate.getFullYear()}-${pad(sessionDate.getMonth() + 1)}-${pad(sessionDate.getDate())}`;
+
+          if (target.lastHitDate !== dateString) {
+            // Calculate total duration for this day
+            const dailySessions = await prisma.studySession.aggregate({
+              where: {
+                userId,
+                startTime: { gte: startOfDay, lte: endOfDay },
+              },
+              _sum: { duration: true },
+            });
+
+            const totalToday = dailySessions._sum.duration || 0;
+
+            if (totalToday >= target.dailySeconds) {
+              // Target hit!
+
+              // Check if they missed a day to reset streak
+              let newStreak = target.currentStreak + 1;
+              if (target.lastHitDate) {
+                const lastDate = new Date(target.lastHitDate);
+                const diffTime = Math.abs(startOfDay.getTime() - lastDate.getTime());
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                if (diffDays > 1) {
+                  newStreak = 1; // Streak broken, restart at 1
+                }
+              }
+
+              await prisma.userTarget.update({
+                where: { userId },
+                data: { currentStreak: newStreak, lastHitDate: dateString },
+              });
+            }
+          }
+        }
+      } catch (streakError) {
+        console.error('Failed to update streak:', streakError);
+        // Do not fail the session creation if streak update fails
+      }
 
       return res.status(201).json(session);
     } catch {

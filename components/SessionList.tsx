@@ -5,9 +5,18 @@ export type SessionItem = {
   duration: number;
   startTime: string;
   endTime: string;
+  intent?: string | null;
   subject: {
     name: string;
   };
+};
+
+const INTENT_LABELS: Record<string, string> = {
+  problem_solving: '🧩 Problem Solving',
+  memorising: '🧠 Memorising',
+  understanding: '💡 Understanding',
+  revising: '📝 Revising',
+  others: '✨ Others'
 };
 
 function formatSeconds(seconds: number): string {
@@ -63,6 +72,7 @@ export default function SessionList({ sessions, onDelete }: SessionListProps) {
         const color = getSubjectColor(session.subject.name);
         const start = new Date(session.startTime);
         const end = new Date(session.endTime);
+        const intentLabel = session.intent ? INTENT_LABELS[session.intent] || session.intent : null;
 
         return (
           <li
@@ -98,20 +108,39 @@ export default function SessionList({ sessions, onDelete }: SessionListProps) {
               }}
             />
 
-            {/* Subject name badge */}
-            <div
-              style={{
-                padding: '4px 10px',
-                borderRadius: '20px',
-                backgroundColor: `${color}22`,
-                border: `1px solid ${color}44`,
-                color: color,
-                fontSize: '12px',
-                fontWeight: 600,
-                flexShrink: 0,
-              }}
-            >
-              {session.subject.name}
+            {/* Badges container */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '140px', flexShrink: 0 }}>
+              {/* Subject name badge */}
+              <div
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '20px',
+                  backgroundColor: `${color}22`,
+                  border: `1px solid ${color}44`,
+                  color: color,
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  display: 'inline-block',
+                  width: 'fit-content'
+                }}
+              >
+                {session.subject.name}
+              </div>
+
+              {/* Intent Tag */}
+              {intentLabel && (
+                <div
+                  style={{
+                    fontSize: '11px',
+                    color: 'var(--text-muted)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  {intentLabel}
+                </div>
+              )}
             </div>
 
             {/* Time info */}

@@ -3,10 +3,11 @@ import { persist } from 'zustand/middleware';
 
 type ClockState = {
   subjectId: number | null;
+  intent: string | null;
   startTime: number | null;
   isRunning: boolean;
   setSubject: (subjectId: number | null) => void;
-  start: (subjectId: number) => void;
+  start: (subjectId: number, intent: string) => void;
   stop: () => void;
   reset: () => void;
 };
@@ -15,12 +16,13 @@ export const useClockStore = create<ClockState>()(
   persist(
     (set) => ({
       subjectId: null,
+      intent: null,
       startTime: null,
       isRunning: false,
       setSubject: (subjectId) => set({ subjectId }),
-      start: (subjectId) => set({ subjectId, startTime: Date.now(), isRunning: true }),
+      start: (subjectId, intent) => set({ subjectId, intent, startTime: Date.now(), isRunning: true }),
       stop: () => set({ isRunning: false }),
-      reset: () => set({ subjectId: null, startTime: null, isRunning: false }),
+      reset: () => set({ subjectId: null, intent: null, startTime: null, isRunning: false }),
     }),
     {
       name: 'kuni-clock-storage',
