@@ -48,8 +48,21 @@ export default function SubjectSelect({ value, onChange, disabled = false }: Sub
       }
     }
     void init();
-    return () => { isMounted = false; };
-  }, [loadSubjects]);
+
+    const onFocus = () => {
+      if (error && !loading) {
+        setLoading(true);
+        setError(null);
+        void init();
+      }
+    };
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [loadSubjects, error, loading]);
 
   async function handleAddSubject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

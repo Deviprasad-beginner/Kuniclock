@@ -64,8 +64,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const getToken = useCallback(async (): Promise<string | null> => {
+        // Wait for auth to initialize if we don't have a user but are still loading
+        if (!auth.currentUser) {
+            await new Promise<void>((resolve) => {
+                const unsubscribe = onAuthStateChanged(auth, () => {
+                    resolve();
+                    unsubscribe();
+                });
+            });
+        }
+
         if (!auth.currentUser) return null;
-        return auth.currentUser.getIdToken();
+        return auth.currentUser.getIdToken(true); // pass true to force refresh if expired
     }, []);
 
     return (
